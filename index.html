@@ -8,13 +8,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-    <style> 
+    <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
         .active-tab { background-color: #2563eb; color: white; }
         .fade-in { animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Loader simples */
+        .loader { border-top-color: #3498db; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -199,10 +202,12 @@
     </main>
 
     <script>
-        // CONFIGURAÇÃO SUPABASE
+        // --- CORREÇÃO IMPORTANTE: Usar um nome de variável diferente de 'supabase' para o cliente ---
         const SUPABASE_URL = 'https://nekbbkenxcukoortusge.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Aqui usamos 'dbClient' em vez de 'supabase' para evitar conflito com a biblioteca global
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // NAVEGAÇÃO
         function showSection(sectionId) {
@@ -259,7 +264,7 @@
                 fez_escola_missoes: document.getElementById('m-missoes').checked
             };
 
-            const { error } = await supabase.from('membros').insert([novoMembro]);
+            const { error } = await dbClient.from('membros').insert([novoMembro]);
             if (error) alert('Erro ao salvar: ' + error.message);
             else {
                 alert('Membro cadastrado com sucesso!');
@@ -269,23 +274,21 @@
         });
 
         async function carregarMembros(filtroMes = null) {
-            let query = supabase.from('membros').select('*').order('nome', { ascending: true });
+            let query = dbClient.from('membros').select('*').order('nome', { ascending: true });
             
             const { data, error } = await query;
-            if (error) return console.error(error);
+            if (error) {
+                console.error(error);
+                return;
+            }
 
             const tbody = document.getElementById('lista-membros');
             tbody.innerHTML = '';
 
-            let dadosFiltrados = data;
+            let dadosFiltrados = data || [];
             
-            // Filtro Inteligente (Javascript Side) para Aniversariantes
             if (filtroMes !== null) {
                 dadosFiltrados = data.filter(m => {
-                    const mesNasc = new Date(m.data_nascimento).getMonth() + 1; // getMonth é 0-indexado
-                    // Ajuste de fuso horário pode ser necessário dependendo de como salvou, 
-                    // mas para data simples (YYYY-MM-DD) geralmente funciona bem.
-                    // Uma abordagem mais segura para string 'YYYY-MM-DD':
                     const mesString = parseInt(m.data_nascimento.split('-')[1]);
                     return mesString === filtroMes;
                 });
@@ -330,7 +333,7 @@
                 qtd_criancas: parseInt(document.getElementById('c-criancas').value) || 0
             };
 
-            const { error } = await supabase.from('cultos').insert([novoCulto]);
+            const { error } = await dbClient.from('cultos').insert([novoCulto]);
             if (error) alert('Erro ao salvar: ' + error.message);
             else {
                 alert('Relatório de culto salvo!');
@@ -340,13 +343,13 @@
         });
 
         async function carregarCultos() {
-            const { data, error } = await supabase.from('cultos').select('*').order('data_culto', { ascending: false });
+            const { data, error } = await dbClient.from('cultos').select('*').order('data_culto', { ascending: false });
             if (error) return console.error(error);
 
             const tbody = document.getElementById('lista-cultos');
             tbody.innerHTML = '';
 
-            data.forEach(c => {
+            (data || []).forEach(c => {
                 const total = (c.qtd_homens || 0) + (c.qtd_mulheres || 0) + (c.qtd_criancas || 0);
                 const dataF = c.data_culto.split('-').reverse().join('/');
                 
@@ -368,7 +371,9 @@
 
         async function carregarDashboard() {
             // Carregar dados de Membros
-            const { data: membros } = await supabase.from('membros').select('*');
+            const { data: membros, error: errM } = await dbClient.from('membros').select('*');
+            if(errM) { console.error("Erro membros", errM); return; }
+
             const totalMembros = membros.length;
             const graduadosRhema = membros.filter(m => m.fez_rhema).length;
             const mesAtual = new Date().getMonth() + 1;
@@ -379,7 +384,8 @@
             document.getElementById('dash-aniversariantes').innerText = aniversariantes;
 
             // Carregar dados de Cultos
-            const { data: cultos } = await supabase.from('cultos').select('*').order('data_culto', { ascending: true }); // Ascendente para gráfico cronológico
+            const { data: cultos, error: errC } = await dbClient.from('cultos').select('*').order('data_culto', { ascending: true });
+            if(errC) { console.error("Erro cultos", errC); return; }
             
             // Calculos
             let totalPublicoGeral = 0;
@@ -394,8 +400,8 @@
                 totalMulheres += (c.qtd_mulheres || 0);
                 totalCriancas += (c.qtd_criancas || 0);
 
-                // Prepara dados para gráfico (últimos 10 cultos)
-                labelsDatas.push(c.data_culto.split('-').reverse().slice(0,2).join('/')); // DD/MM
+                // Prepara dados para gráfico (apenas DD/MM para não poluir)
+                labelsDatas.push(c.data_culto.split('-').reverse().slice(0,2).join('/')); 
                 dataPublico.push(totalCulto);
             });
 
@@ -411,7 +417,7 @@
             chartFreqInstancia = new Chart(ctxFreq, {
                 type: 'line',
                 data: {
-                    labels: labelsDatas.slice(-10), // Últimos 10
+                    labels: labelsDatas.slice(-10), // Mostra apenas os últimos 10
                     datasets: [{
                         label: 'Total de Presentes',
                         data: dataPublico.slice(-10),
@@ -428,17 +434,20 @@
             const ctxDemo = document.getElementById('chartDemografia').getContext('2d');
             if(chartDemoInstancia) chartDemoInstancia.destroy();
 
-            chartDemoInstancia = new Chart(ctxDemo, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Homens', 'Mulheres', 'Crianças'],
-                    datasets: [{
-                        data: [totalHomens, totalMulheres, totalCriancas],
-                        backgroundColor: ['#3b82f6', '#ec4899', '#f59e0b']
-                    }]
-                },
-                options: { responsive: true }
-            });
+            // Evitar gráfico vazio se não houver dados
+            if (totalHomens + totalMulheres + totalCriancas > 0) {
+                chartDemoInstancia = new Chart(ctxDemo, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Homens', 'Mulheres', 'Crianças'],
+                        datasets: [{
+                            data: [totalHomens, totalMulheres, totalCriancas],
+                            backgroundColor: ['#3b82f6', '#ec4899', '#f59e0b']
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            }
         }
 
         // Inicializar
@@ -447,4 +456,3 @@
     </script>
 </body>
 </html>
-
