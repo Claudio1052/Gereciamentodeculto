@@ -3,476 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão IEVV Zona Leste</title>
-    
+    <title>IEVV Zona Leste - Sistema</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        :root {
-            --verbo-red: #B91C1C;
-            --verbo-dark: #1F2937;
-            --bg-light: #F3F4F6;
-        }
-        body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; }
+        body { background: #f4f4f4; padding-bottom: 200px; }
+        .navbar { background: #B91C1C; color: white; }
+        .btn-verbo { background: #B91C1C; color: white; border: none; }
+        .btn-verbo:hover { background: #900000; color: white; }
         
-        /* Navbar */
-        .navbar { background-color: var(--verbo-red); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .navbar-brand, .nav-link { color: white !important; font-weight: 500; cursor: pointer; }
-        .nav-link:hover { color: #ffd7d7 !important; }
-        .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 5px; }
-        
-        /* Cards */
-        .stat-card { border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-icon { font-size: 2rem; color: var(--verbo-red); opacity: 0.8; }
-        
-        /* Loading */
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); z-index: 9999; display: none;
-            justify-content: center; align-items: center;
+        /* PAINEL DE DEBUG (Para vermos o erro) */
+        #debug-panel {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
+            background: black; color: #0f0; font-family: monospace;
+            padding: 10px; overflow-y: scroll; z-index: 9999;
+            border-top: 3px solid red; font-size: 12px;
         }
     </style>
 </head>
 <body>
 
-    <div class="loading-overlay" id="loader">
-        <div class="spinner-border text-danger" role="status"></div>
-    </div>
-
-    <nav class="navbar navbar-expand-lg sticky-top">
+    <nav class="navbar p-3 mb-4">
         <div class="container">
-            <span class="navbar-brand"><i class="fas fa-church me-2"></i> IEVV Zona Leste</span>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link active" onclick="showSection('dashboard')">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" onclick="showSection('cultos')">Gerenciar Cultos</a></li>
-                    <li class="nav-item"><a class="nav-link" onclick="showSection('membros')">Membros</a></li>
-                </ul>
-            </div>
+            <h4 class="m-0">IEVV Zona Leste</h4>
         </div>
     </nav>
 
-    <div class="container py-4">
+    <div class="container">
         
-        <div id="dashboard" class="content-section">
-            <h3 class="mb-4 text-secondary">Dashboard</h3>
-            
-            <div id="status-db" class="alert alert-secondary">Carregando sistema...</div>
-
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="card stat-card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted">Membros</h6><h2 id="dash-total-membros">0</h2></div>
-                            <i class="fas fa-users stat-icon"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stat-card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted">Média Público</h6><h2 id="dash-media-publico">0</h2></div>
-                            <i class="fas fa-chart-line stat-icon"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stat-card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted">Aniversariantes</h6><h2 id="dash-aniversariantes">0</h2></div>
-                            <i class="fas fa-birthday-cake stat-icon"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stat-card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted">Graduados Rhema</h6><h2 id="dash-rhema">0</h2></div>
-                            <i class="fas fa-graduation-cap stat-icon"></i>
-                        </div>
-                    </div>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card p-3 text-center">
+                    <h3>Membros</h3>
+                    <h1 id="total-membros">...</h1>
                 </div>
             </div>
-
-            <div class="row mt-4">
-                <div class="col-12">
-                     <div class="card">
-                        <div class="card-header bg-white fw-bold">Últimos Cultos</div>
-                        <div class="card-body">
-                            <table class="table table-hover" id="dash-cultos-table">
-                                <thead><tr><th>Data</th><th>Ministro</th><th>Público Total</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                     </div>
+            <div class="col-md-4">
+                <div class="card p-3 text-center">
+                    <h3>Último Culto</h3>
+                    <div id="ultimo-culto">Carregando...</div>
                 </div>
             </div>
         </div>
 
-        <div id="cultos" class="content-section d-none">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>Gerenciamento de Cultos</h3>
-                <button class="btn btn-danger" onclick="abrirModal('modalCulto')"><i class="fas fa-plus"></i> Novo Culto</button>
-            </div>
-            <div class="card">
-                <div class="card-body table-responsive">
-                    <table class="table" id="tabela-cultos">
-                        <thead class="table-light">
-                            <tr><th>Data</th><th>Ministro</th><th>Público (H/M/C)</th><th>Tempos</th></tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+        <hr>
+
+        <div class="d-flex gap-2 mb-4">
+            <button class="btn btn-verbo btn-lg" onclick="abrirModal('modalMembro')">Cadastrar Membro</button>
+            <button class="btn btn-dark btn-lg" onclick="abrirModal('modalCulto')">Relatório de Culto</button>
+            <button class="btn btn-outline-dark" onclick="carregarDados()">🔄 Atualizar Dados</button>
         </div>
 
-        <div id="membros" class="content-section d-none">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>Cadastro de Membros</h3>
-                <button class="btn btn-danger" onclick="abrirModal('modalMembro')"><i class="fas fa-user-plus"></i> Novo Membro</button>
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Membros Recentes</h5>
+                <ul class="list-group" id="lista-membros"></ul>
             </div>
-            
-            <div class="card mb-3 p-2">
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <select class="form-select" id="filtro-membros" onchange="carregarMembros()">
-                            <option value="todos">Todos os Membros</option>
-                            <option value="aniversariantes">Aniversariantes do Mês</option>
-                            <option value="rhema">Fez Rhema</option>
-                        </select>
-                    </div>
-                    <div class="col-md-8">
-                        <input type="text" class="form-control" id="busca-membro" placeholder="Buscar nome..." onkeyup="carregarMembros()">
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body table-responsive">
-                    <table class="table" id="tabela-membros">
-                        <thead class="table-light"><tr><th>Nome</th><th>Telefone</th><th>Endereço</th><th>Status</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+            <div class="col-md-6">
+                <h5>Histórico Cultos</h5>
+                <ul class="list-group" id="lista-cultos"></ul>
             </div>
         </div>
 
     </div>
 
-    <div class="modal fade" id="modalMembro" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <div class="modal" id="modalMembro" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Novo Membro</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header"><h5>Novo Membro</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <form id="form-membro">
-                        <div class="row g-3">
-                            <div class="col-md-8"><label>Nome</label><input type="text" class="form-control" name="nome" required></div>
-                            <div class="col-md-4"><label>Nascimento</label><input type="date" class="form-control" name="data_nascimento"></div>
-                            <div class="col-md-4"><label>Telefone</label><input type="text" class="form-control" name="telefone"></div>
-                            <div class="col-md-4"><label>CEP</label><input type="text" class="form-control" id="cep" name="cep" onblur="buscarCep(this.value)"></div>
-                            <div class="col-md-12"><label>Endereço</label><input type="text" class="form-control" id="endereco" name="endereco"></div>
-                            <div class="col-md-6"><label>Bairro</label><input type="text" class="form-control" id="bairro" name="bairro"></div>
-                            <div class="col-md-6"><label>Cidade</label><input type="text" class="form-control" id="cidade" name="cidade"></div>
-                            <div class="col-12 mt-3 p-3 bg-light rounded">
-                                <label class="fw-bold mb-2">Cursos:</label><br>
-                                <input type="checkbox" name="fez_rhema"> Rhema &nbsp;
-                                <input type="checkbox" name="fez_escola_ministros"> Esc. Ministros &nbsp;
-                                <input type="checkbox" name="fez_escola_missoes"> Esc. Missões
-                            </div>
-                        </div>
-                    </form>
+                    <input type="text" id="m_nome" class="form-control mb-2" placeholder="Nome Completo">
+                    <input type="text" id="m_telefone" class="form-control mb-2" placeholder="Telefone">
+                    <input type="date" id="m_nasc" class="form-control mb-2">
+                    <div class="d-flex gap-2">
+                        <input type="text" id="m_cep" class="form-control mb-2" placeholder="CEP" onblur="buscarCep(this.value)">
+                        <button type="button" class="btn btn-sm btn-secondary mb-2" onclick="buscarCep(document.getElementById('m_cep').value)">Buscar</button>
+                    </div>
+                    <input type="text" id="m_end" class="form-control mb-2" placeholder="Endereço">
+                    <div class="form-check"><input type="checkbox" id="m_rhema" class="form-check-input"> <label>Fez Rhema</label></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="button" class="btn btn-danger" onclick="salvarMembro()">Salvar</button>
+                    <button class="btn btn-verbo" onclick="salvarMembro()">Salvar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="modalCulto" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <div class="modal" id="modalCulto" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Relatório de Culto</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header"><h5>Relatório Culto</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <form id="form-culto">
-                        <div class="row g-3">
-                            <div class="col-md-4"><label>Data</label><input type="date" class="form-control" name="data_culto" required></div>
-                            <div class="col-md-4"><label>Início</label><input type="time" class="form-control" name="horario_inicio"></div>
-                            <div class="col-md-4"><label>Término</label><input type="time" class="form-control" name="horario_termino"></div>
-                            <div class="col-md-6"><label>Ministro</label><input type="text" class="form-control" name="ministro"></div>
-                            <div class="col-md-6"><label>Dirigente</label><input type="text" class="form-control" name="dirigente"></div>
-                            <div class="col-md-4"><label>Homens</label><input type="number" class="form-control" name="qtd_homens" value="0"></div>
-                            <div class="col-md-4"><label>Mulheres</label><input type="number" class="form-control" name="qtd_mulheres" value="0"></div>
-                            <div class="col-md-4"><label>Crianças</label><input type="number" class="form-control" name="qtd_criancas" value="0"></div>
-                            <div class="col-md-6"><label>Tempo Ministração (min)</label><input type="number" class="form-control" name="tempo_ministracao"></div>
-                            <div class="col-md-6"><label>Tempo Dirigente (min)</label><input type="number" class="form-control" name="tempo_dirigente"></div>
-                        </div>
-                    </form>
+                    <label>Data</label><input type="date" id="c_data" class="form-control mb-2">
+                    <input type="text" id="c_ministro" class="form-control mb-2" placeholder="Ministro">
+                    <div class="row">
+                        <div class="col"><input type="number" id="c_homens" class="form-control" placeholder="Homens"></div>
+                        <div class="col"><input type="number" id="c_mulheres" class="form-control" placeholder="Mulheres"></div>
+                        <div class="col"><input type="number" id="c_criancas" class="form-control" placeholder="Crianças"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="button" class="btn btn-danger" onclick="salvarCulto()">Salvar</button>
+                    <button class="btn btn-verbo" onclick="salvarCulto()">Salvar</button>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="debug-panel">
+        <strong>STATUS DO SISTEMA:</strong><br>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        // --- 1. CONFIGURAÇÃO E TESTE DE CONEXÃO ---
-        const SUPABASE_URL = 'https://nekbbkenxcukoortusge.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc';
+        // --- FERRAMENTA DE LOG NA TELA ---
+        function log(msg, tipo = 'info') {
+            const painel = document.getElementById('debug-panel');
+            const cor = tipo === 'erro' ? 'red' : '#00ff00';
+            const hora = new Date().toLocaleTimeString();
+            painel.innerHTML += `<div style="color:${cor}">[${hora}] ${msg}</div>`;
+            painel.scrollTop = painel.scrollHeight;
+        }
+
+        // --- INICIALIZAÇÃO ---
+        const SB_URL = 'https://nekbbkenxcukoortusge.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc';
         
         let supabase;
 
-        // Tentar inicializar o Supabase
         try {
-            if (window.supabase) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                document.getElementById('status-db').innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Sistema conectado!</span>';
-                setTimeout(() => document.getElementById('status-db').style.display = 'none', 2000);
-            } else {
-                throw new Error("Biblioteca Supabase não carregou.");
-            }
-        } catch (err) {
-            console.error(err);
-            document.getElementById('status-db').innerHTML = '<span class="text-danger fw-bold">ERRO CRÍTICO: Não foi possível carregar o sistema. Verifique sua internet ou desbloqueie scripts.</span>';
-        }
-
-        // --- 2. NAVEGAÇÃO ---
-        function showSection(sectionId) {
-            // Esconde tudo
-            document.querySelectorAll('.content-section').forEach(el => el.classList.add('d-none'));
-            // Remove active dos menus
-            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-            
-            // Mostra o desejado
-            const target = document.getElementById(sectionId);
-            if(target) target.classList.remove('d-none');
-            
-            // Marca menu (gambiarra visual simples)
-            event.target.classList.add('active');
-
-            // Carrega dados
-            if(sectionId === 'dashboard') loadDashboard();
-            if(sectionId === 'cultos') carregarCultos();
-            if(sectionId === 'membros') carregarMembros();
+            log("Iniciando conexão com Supabase...");
+            supabase = window.supabase.createClient(SB_URL, SB_KEY);
+            log("Biblioteca carregada. Testando conexão...");
+            carregarDados();
+        } catch (e) {
+            log("ERRO FATAL: Biblioteca Supabase não carregou. Verifique sua internet.", "erro");
         }
 
         function abrirModal(id) {
-            const modal = new bootstrap.Modal(document.getElementById(id));
-            modal.show();
+            new bootstrap.Modal(document.getElementById(id)).show();
         }
 
-        function toggleLoader(show) {
-            const loader = document.getElementById('loader');
-            if(loader) loader.style.display = show ? 'flex' : 'none';
-        }
-
-        // --- 3. BUSCA CEP ---
+        // --- BUSCA CEP ---
         async function buscarCep(cep) {
             cep = cep.replace(/\D/g, '');
-            if (cep.length === 8) {
-                toggleLoader(true);
-                try {
-                    const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-                    const data = await res.json();
-                    if (!data.erro) {
-                        document.getElementById('endereco').value = data.logradouro;
-                        document.getElementById('bairro').value = data.bairro;
-                        document.getElementById('cidade').value = data.localidade;
-                    } else {
-                        alert("CEP não encontrado.");
-                    }
-                } catch (e) { alert("Erro ao buscar CEP."); }
-                toggleLoader(false);
+            if(cep.length !== 8) return alert("CEP inválido");
+            
+            log(`Buscando CEP: ${cep}...`);
+            try {
+                const req = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const res = await req.json();
+                if(res.erro) {
+                    log("CEP não encontrado no ViaCEP", "erro");
+                    alert("CEP não encontrado");
+                } else {
+                    document.getElementById('m_end').value = `${res.logradouro}, ${res.bairro} - ${res.localidade}`;
+                    log("Endereço encontrado!");
+                }
+            } catch(e) {
+                log("Erro de conexão com ViaCEP: " + e.message, "erro");
             }
         }
 
-        // --- 4. FUNÇÕES DE BANCO DE DADOS (MEMBROS) ---
+        // --- SALVAR MEMBRO ---
         async function salvarMembro() {
-            if(!supabase) return alert("Erro de conexão");
-            toggleLoader(true);
-            
-            const form = document.getElementById('form-membro');
-            const dados = {
-                nome: form.nome.value,
-                data_nascimento: form.data_nascimento.value || null,
-                telefone: form.telefone.value,
-                cep: form.cep.value,
-                endereco: form.endereco.value,
-                bairro: form.bairro.value,
-                cidade: form.cidade.value,
-                fez_rhema: form.fez_rhema.checked,
-                fez_escola_ministros: form.fez_escola_ministros.checked,
-                fez_escola_missoes: form.fez_escola_missoes.checked
-            };
+            const nome = document.getElementById('m_nome').value;
+            if(!nome) return alert("Preencha o nome");
 
-            const { error } = await supabase.from('membros').insert([dados]);
-            toggleLoader(false);
+            log("Tentando salvar membro...");
+            
+            const { error } = await supabase.from('membros').insert([{
+                nome: nome,
+                telefone: document.getElementById('m_telefone').value,
+                data_nascimento: document.getElementById('m_nasc').value || null,
+                cep: document.getElementById('m_cep').value,
+                endereco: document.getElementById('m_end').value,
+                fez_rhema: document.getElementById('m_rhema').checked
+            }]);
 
             if(error) {
-                console.error(error);
-                alert("Erro ao salvar: " + error.message);
+                log("ERRO AO SALVAR MEMBRO: " + error.message + ". DETALHE: " + JSON.stringify(error), "erro");
+                alert("Erro ao salvar! Veja o painel preto abaixo.");
             } else {
-                alert("Membro salvo com sucesso!");
+                log("Membro salvo com sucesso!");
+                alert("Salvo!");
+                carregarDados();
                 bootstrap.Modal.getInstance(document.getElementById('modalMembro')).hide();
-                form.reset();
-                carregarMembros();
             }
         }
 
-        async function carregarMembros() {
-            if(!supabase) return;
-            toggleLoader(true);
-            
-            const filtro = document.getElementById('filtro-membros').value;
-            const busca = document.getElementById('busca-membro').value;
-            
-            let query = supabase.from('membros').select('*').order('nome');
-            if(busca) query = query.ilike('nome', `%${busca}%`);
-            if(filtro === 'rhema') query = query.eq('fez_rhema', true);
+        // --- SALVAR CULTO ---
+        async function salvarCulto() {
+            const dataCulto = document.getElementById('c_data').value;
+            if(!dataCulto) return alert("Selecione a data");
 
-            const { data, error } = await query;
-            toggleLoader(false);
+            log("Tentando salvar culto...");
+
+            const { error } = await supabase.from('cultos').insert([{
+                data_culto: dataCulto,
+                ministro: document.getElementById('c_ministro').value,
+                qtd_homens: document.getElementById('c_homens').value || 0,
+                qtd_mulheres: document.getElementById('c_mulheres').value || 0,
+                qtd_criancas: document.getElementById('c_criancas').value || 0
+            }]);
 
             if(error) {
-                console.error(error);
-                return;
-            }
-
-            let lista = data;
-            // Filtro manual de Aniversariantes (JS)
-            if(filtro === 'aniversariantes') {
-                const mesAtual = new Date().getMonth();
-                lista = data.filter(m => {
-                    if(!m.data_nascimento) return false;
-                    return new Date(m.data_nascimento).getMonth() === mesAtual;
-                });
-            }
-
-            const tbody = document.querySelector('#tabela-membros tbody');
-            tbody.innerHTML = '';
-            lista.forEach(m => {
-                let tags = '';
-                if(m.fez_rhema) tags += '<span class="badge bg-danger me-1">Rhema</span>';
-                if(m.fez_escola_ministros) tags += '<span class="badge bg-dark me-1">Min.</span>';
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${m.nome}</td>
-                        <td>${m.telefone || '-'}</td>
-                        <td><small>${m.cidade || ''}</small></td>
-                        <td>${tags}</td>
-                    </tr>`;
-            });
-        }
-
-        // --- 5. FUNÇÕES DE BANCO DE DADOS (CULTOS) ---
-        async function salvarCulto() {
-            if(!supabase) return;
-            toggleLoader(true);
-            const form = document.getElementById('form-culto');
-            
-            const dados = {
-                data_culto: form.data_culto.value,
-                horario_inicio: form.horario_inicio.value || null,
-                horario_termino: form.horario_termino.value || null,
-                ministro: form.ministro.value,
-                dirigente: form.dirigente.value,
-                qtd_homens: Number(form.qtd_homens.value),
-                qtd_mulheres: Number(form.qtd_mulheres.value),
-                qtd_criancas: Number(form.qtd_criancas.value),
-                tempo_ministracao: Number(form.tempo_ministracao.value),
-                tempo_dirigente: Number(form.tempo_dirigente.value)
-            };
-
-            const { error } = await supabase.from('cultos').insert([dados]);
-            toggleLoader(false);
-
-            if(error) alert("Erro: " + error.message);
-            else {
-                alert("Culto registrado!");
+                log("ERRO AO SALVAR CULTO: " + error.message, "erro");
+                alert("Erro! Veja o painel preto.");
+            } else {
+                log("Culto salvo!");
+                alert("Salvo!");
+                carregarDados();
                 bootstrap.Modal.getInstance(document.getElementById('modalCulto')).hide();
-                form.reset();
-                carregarCultos();
             }
         }
 
-        async function carregarCultos() {
-            if(!supabase) return;
-            toggleLoader(true);
-            const { data, error } = await supabase.from('cultos').select('*').order('data_culto', {ascending: false});
-            toggleLoader(false);
+        // --- CARREGAR DADOS ---
+        async function carregarDados() {
+            log("Atualizando dashboard...");
+            
+            // Membros
+            const { count, error: errM } = await supabase.from('membros').select('*', { count: 'exact', head: true });
+            if(errM) log("Erro ao ler membros: " + errM.message, "erro");
+            else document.getElementById('total-membros').innerText = count;
 
-            if(data) {
-                const tbody = document.querySelector('#tabela-cultos tbody');
-                tbody.innerHTML = '';
-                data.forEach(c => {
-                    const total = (c.qtd_homens||0) + (c.qtd_mulheres||0) + (c.qtd_criancas||0);
-                    const dt = c.data_culto.split('-').reverse().join('/');
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${dt}</td>
-                            <td>${c.ministro}</td>
-                            <td>H:${c.qtd_homens} M:${c.qtd_mulheres} C:${c.qtd_criancas} <strong>(Tot: ${total})</strong></td>
-                            <td>Min: ${c.tempo_ministracao}m</td>
-                        </tr>`;
-                });
+            const { data: listaM } = await supabase.from('membros').select('nome, fez_rhema').order('nome').limit(5);
+            if(listaM) {
+                document.getElementById('lista-membros').innerHTML = listaM.map(m => 
+                    `<li class="list-group-item d-flex justify-content-between">
+                        ${m.nome} ${m.fez_rhema ? '<span class="badge bg-danger">Rhema</span>' : ''}
+                    </li>`
+                ).join('');
             }
+
+            // Cultos
+            const { data: cultos, error: errC } = await supabase.from('cultos').select('*').order('data_culto', {ascending: false}).limit(5);
+            if(errC) {
+                log("Erro ao ler cultos: " + errC.message, "erro");
+                if(errC.message.includes("relation") && errC.message.includes("does not exist")) {
+                    log("URGENTE: VOCÊ NÃO RODOU O CÓDIGO SQL NO SUPABASE PARA CRIAR AS TABELAS.", "erro");
+                }
+            } else if(cultos.length > 0) {
+                document.getElementById('ultimo-culto').innerHTML = `${cultos[0].data_culto}<br><strong>${cultos[0].ministro}</strong>`;
+                document.getElementById('lista-cultos').innerHTML = cultos.map(c => 
+                    `<li class="list-group-item">${c.data_culto} - ${c.ministro}</li>`
+                ).join('');
+            } else {
+                document.getElementById('ultimo-culto').innerText = "Nenhum registro";
+            }
+            
+            log("Dados atualizados.");
         }
-
-        // --- 6. DASHBOARD ---
-        async function loadDashboard() {
-            if(!supabase) return;
-            // Carrega membros
-            const { count } = await supabase.from('membros').select('*', { count: 'exact', head: true });
-            document.getElementById('dash-total-membros').innerText = count || 0;
-
-            // Carrega aniversariantes e Rhema
-            const { data: membros } = await supabase.from('membros').select('data_nascimento, fez_rhema');
-            if(membros) {
-                document.getElementById('dash-rhema').innerText = membros.filter(m => m.fez_rhema).length;
-                const mesAtual = new Date().getMonth();
-                const niver = membros.filter(m => m.data_nascimento && new Date(m.data_nascimento).getMonth() === mesAtual).length;
-                document.getElementById('dash-aniversariantes').innerText = niver;
-            }
-
-            // Carrega média de público e tabela
-            const { data: cultos } = await supabase.from('cultos').select('*').order('data_culto', {ascending: false}).limit(5);
-            if(cultos && cultos.length > 0) {
-                let soma = 0;
-                const tbody = document.querySelector('#dash-cultos-table tbody');
-                tbody.innerHTML = '';
-                cultos.forEach(c => {
-                    const t = (c.qtd_homens||0) + (c.qtd_mulheres||0) + (c.qtd_criancas||0);
-                    soma += t;
-                    tbody.innerHTML += `<tr><td>${c.data_culto.split('-').reverse().join('/')}</td><td>${c.ministro}</td><td>${t}</td></tr>`;
-                });
-                document.getElementById('dash-media-publico').innerText = Math.round(soma / cultos.length);
-            }
-        }
-
-        // Inicializar
-        window.onload = () => {
-            loadDashboard();
-        };
-
     </script>
 </body>
 </html>
