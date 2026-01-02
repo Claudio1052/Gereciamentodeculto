@@ -11,136 +11,130 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* Cores Personalizadas Verbo da Vida (Aproximação) */
-        :root {
-            --verbo-red: #C8102E;
-            --verbo-dark: #1a1a1a;
-        }
+        :root { --verbo-red: #C8102E; --verbo-dark: #1a1a1a; }
         .bg-verbo { background-color: var(--verbo-red); }
         .text-verbo { color: var(--verbo-red); }
         .nav-active { border-bottom: 3px solid var(--verbo-red); color: var(--verbo-dark); font-weight: bold; }
-        
-        /* Loading Overlay */
         #loading {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); z-index: 50; display: none;
-            justify-content: center; align-items: center;
+            background: rgba(255,255,255,0.9); z-index: 50; display: flex;
+            justify-content: center; align-items: center; flexDirection: column;
         }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
 
-    <div id="loading"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600"></div></div>
+    <div id="loading">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600 mb-4"></div>
+        <p id="loading-text" class="text-gray-600 font-medium">Conectando ao banco de dados...</p>
+        <p id="error-message" class="text-red-600 font-bold mt-4 hidden text-center px-4"></p>
+        <button id="retry-btn" onclick="location.reload()" class="hidden mt-4 bg-gray-800 text-white px-4 py-2 rounded">Tentar Novamente</button>
+    </div>
 
-    <header class="bg-white shadow-md">
+    <header class="bg-white shadow-md sticky top-0 z-40">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="h-10 w-10 bg-verbo rounded-full flex items-center justify-center text-white font-bold text-xl">V</div>
                 <div>
                     <h1 class="text-xl font-bold text-gray-900">Igreja Verbo da Vida</h1>
-                    <p class="text-xs text-gray-500 uppercase tracking-wide">Zona Leste - Sistema de Gestão</p>
+                    <p class="text-xs text-gray-500 uppercase">Zona Leste - Gestão</p>
                 </div>
             </div>
-            <div class="text-sm text-gray-500 hidden md:block">
-                <i class="fas fa-calendar-day mr-2"></i> <span id="currentDate"></span>
+            <div class="text-xs text-green-600 font-bold border border-green-200 bg-green-50 px-2 py-1 rounded hidden md:block" id="status-conn">
+                <i class="fas fa-wifi"></i> Online
             </div>
         </div>
         
-        <nav class="container mx-auto px-4 mt-2">
-            <ul class="flex space-x-6">
-                <li><button onclick="showPage('dashboard')" id="nav-dashboard" class="nav-active py-3 px-2 hover:text-red-700 transition">Dashboard</button></li>
-                <li><button onclick="showPage('cadastro')" id="nav-cadastro" class="py-3 px-2 hover:text-red-700 transition text-gray-600">Novo Culto</button></li>
-                <li><button onclick="showPage('historico')" id="nav-historico" class="py-3 px-2 hover:text-red-700 transition text-gray-600">Histórico & Consulta</button></li>
+        <nav class="container mx-auto px-4 mt-2 border-t pt-2">
+            <ul class="flex space-x-4 overflow-x-auto pb-2">
+                <li><button onclick="showPage('dashboard')" id="nav-dashboard" class="nav-active py-2 px-2 whitespace-nowrap">Dashboard</button></li>
+                <li><button onclick="showPage('cadastro')" id="nav-cadastro" class="py-2 px-2 text-gray-600 whitespace-nowrap">Novo Culto</button></li>
+                <li><button onclick="showPage('historico')" id="nav-historico" class="py-2 px-2 text-gray-600 whitespace-nowrap">Histórico</button></li>
             </ul>
         </nav>
     </header>
 
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-6 mb-20">
 
         <section id="page-dashboard">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
-                    <p class="text-gray-500 text-sm">Total de Cultos (Mês)</p>
-                    <h3 class="text-3xl font-bold mt-1" id="kpi-total-cultos">0</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
+                    <p class="text-gray-500 text-xs uppercase">Total Cultos</p>
+                    <h3 class="text-2xl font-bold" id="kpi-total-cultos">-</h3>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-                    <p class="text-gray-500 text-sm">Média de Público</p>
-                    <h3 class="text-3xl font-bold mt-1" id="kpi-media-publico">0</h3>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-red-500">
+                    <p class="text-gray-500 text-xs uppercase">Média Público</p>
+                    <h3 class="text-2xl font-bold" id="kpi-media-publico">-</h3>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
-                    <p class="text-gray-500 text-sm">Conversões (Simulado)</p>
-                    <h3 class="text-3xl font-bold mt-1">-</h3>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-yellow-500">
-                    <p class="text-gray-500 text-sm">Último Culto</p>
-                    <h3 class="text-lg font-bold mt-1 truncate" id="kpi-ultimo-tipo">-</h3>
+                 <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-500 col-span-2 md:col-span-2">
+                    <p class="text-gray-500 text-xs uppercase">Último Culto</p>
+                    <h3 class="text-lg font-bold truncate" id="kpi-ultimo-tipo">-</h3>
                     <p class="text-xs text-gray-400" id="kpi-ultimo-data">-</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-lg font-bold mb-4 text-gray-700">Frequência por Tipo de Culto</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4">Público por Tipo</h3>
                     <canvas id="chartType"></canvas>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-lg font-bold mb-4 text-gray-700">Distribuição de Público (Geral)</h3>
-                    <canvas id="chartDemographics"></canvas>
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4">Perfil (H / M / C)</h3>
+                    <div class="h-64 flex justify-center">
+                        <canvas id="chartDemographics"></canvas>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section id="page-cadastro" class="hidden max-w-4xl mx-auto">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-gray-800 p-4">
-                    <h2 class="text-white font-bold text-lg"><i class="fas fa-edit mr-2"></i>Registrar Culto</h2>
+        <section id="page-cadastro" class="hidden">
+            <div class="bg-white rounded shadow-lg overflow-hidden max-w-2xl mx-auto">
+                <div class="bg-gray-800 p-3">
+                    <h2 class="text-white font-bold"><i class="fas fa-plus-circle mr-2"></i>Registrar</h2>
                 </div>
-                <form id="formCulto" class="p-8 space-y-6">
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form id="formCulto" class="p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Culto</label>
-                            <select id="tipo_culto" required class="w-full border-gray-300 border rounded-md p-2 focus:ring-red-500 focus:border-red-500">
+                            <label class="text-xs font-bold text-gray-600">Tipo de Culto</label>
+                            <select id="tipo_culto" required class="w-full border p-2 rounded mt-1">
                                 <option value="" disabled selected>Selecione...</option>
-                                <option value="Terça do Espírito">Terça do Espírito</option>
-                                <option value="Quinta do Ensino">Quinta do Ensino</option>
-                                <option value="Culto de Celebração">Culto de Celebração</option>
-                                <option value="Escola Dominical">Escola Dominical</option>
-                                <option value="Evento Especial">Evento Especial</option>
+                                <option>Terça do Espírito</option>
+                                <option>Quinta do Ensino</option>
+                                <option>Culto de Celebração</option>
+                                <option>Escola Dominical</option>
+                                <option>Evento Especial</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Data do Culto</label>
-                            <input type="date" id="data_culto" required class="w-full border-gray-300 border rounded-md p-2">
+                            <label class="text-xs font-bold text-gray-600">Data</label>
+                            <input type="date" id="data_culto" required class="w-full border p-2 rounded mt-1">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-md">
+                    <div class="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Hora Início</label>
-                            <input type="time" id="hora_inicio" required class="w-full border-gray-300 border rounded-md p-2">
+                            <label class="text-xs font-bold text-gray-600">Início</label>
+                            <input type="time" id="hora_inicio" required class="w-full border p-2 rounded mt-1 bg-white">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Hora Término</label>
-                            <input type="time" id="hora_termino" required class="w-full border-gray-300 border rounded-md p-2">
+                            <label class="text-xs font-bold text-gray-600">Término</label>
+                            <input type="time" id="hora_termino" required class="w-full border p-2 rounded mt-1 bg-white">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Ministro (Preletor)</label>
-                            <input type="text" id="ministro" placeholder="Nome do Ministro" required class="w-full border-gray-300 border rounded-md p-2">
-                            <div class="mt-2 flex items-center gap-2">
-                                <span class="text-xs text-gray-500">Tempo (min):</span>
-                                <input type="number" id="tempo_ministracao" placeholder="0" class="w-20 border border-gray-300 rounded p-1 text-sm">
+                            <label class="text-xs font-bold text-gray-600">Ministro</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="ministro" placeholder="Nome" required class="w-full border p-2 rounded">
+                                <input type="number" id="tempo_ministracao" placeholder="Min" class="w-20 border p-2 rounded text-center">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Dirigente</label>
-                            <input type="text" id="dirigente" placeholder="Nome do Dirigente" required class="w-full border-gray-300 border rounded-md p-2">
-                            <div class="mt-2 flex items-center gap-2">
-                                <span class="text-xs text-gray-500">Tempo (min):</span>
-                                <input type="number" id="tempo_dirigente" placeholder="0" class="w-20 border border-gray-300 rounded p-1 text-sm">
+                            <label class="text-xs font-bold text-gray-600">Dirigente</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="dirigente" placeholder="Nome" required class="w-full border p-2 rounded">
+                                <input type="number" id="tempo_dirigente" placeholder="Min" class="w-20 border p-2 rounded text-center">
                             </div>
                         </div>
                     </div>
@@ -148,287 +142,250 @@
                     <hr>
 
                     <div>
-                        <h3 class="text-sm font-bold text-gray-700 mb-3 uppercase">Contagem de Pessoas</h3>
-                        <div class="grid grid-cols-3 gap-4 text-center">
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Homens</label>
-                                <input type="number" id="qtd_homens" value="0" min="0" class="w-full border-gray-300 border rounded-md p-2 text-center text-lg font-bold text-blue-600">
+                        <label class="text-xs font-bold text-gray-600 block mb-2 text-center uppercase">Contagem de Pessoas</label>
+                        <div class="flex justify-between gap-2 text-center">
+                            <div class="w-1/3">
+                                <span class="block text-xs text-blue-600 font-bold">Homens</span>
+                                <input type="number" id="qtd_homens" value="0" class="w-full border-2 border-blue-100 p-2 rounded text-center font-bold text-lg">
                             </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Mulheres</label>
-                                <input type="number" id="qtd_mulheres" value="0" min="0" class="w-full border-gray-300 border rounded-md p-2 text-center text-lg font-bold text-pink-600">
+                            <div class="w-1/3">
+                                <span class="block text-xs text-pink-600 font-bold">Mulheres</span>
+                                <input type="number" id="qtd_mulheres" value="0" class="w-full border-2 border-pink-100 p-2 rounded text-center font-bold text-lg">
                             </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Crianças</label>
-                                <input type="number" id="qtd_criancas" value="0" min="0" class="w-full border-gray-300 border rounded-md p-2 text-center text-lg font-bold text-yellow-600">
+                            <div class="w-1/3">
+                                <span class="block text-xs text-yellow-600 font-bold">Crianças</span>
+                                <input type="number" id="qtd_criancas" value="0" class="w-full border-2 border-yellow-100 p-2 rounded text-center font-bold text-lg">
                             </div>
                         </div>
                     </div>
 
-                    <div class="pt-4">
-                        <button type="submit" class="w-full bg-verbo hover:bg-red-800 text-white font-bold py-3 px-4 rounded transition shadow-lg transform hover:-translate-y-0.5">
-                            Salvar Registro
-                        </button>
-                    </div>
+                    <button type="submit" class="w-full bg-verbo hover:bg-red-800 text-white font-bold py-3 rounded shadow transition mt-4">
+                        SALVAR DADOS
+                    </button>
                 </form>
             </div>
         </section>
 
         <section id="page-historico" class="hidden">
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
-                <h3 class="font-bold text-gray-700 mb-4">Filtros de Busca</h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <input type="text" id="filter-search" placeholder="Buscar Ministro ou Dirigente..." class="border p-2 rounded w-full">
-                    <select id="filter-type" class="border p-2 rounded w-full">
-                        <option value="all">Todos os Tipos</option>
-                        <option value="Terça do Espírito">Terça do Espírito</option>
-                        <option value="Quinta do Ensino">Quinta do Ensino</option>
-                        <option value="Culto de Celebração">Culto de Celebração</option>
-                        <option value="Escola Dominical">Escola Dominical</option>
-                    </select>
-                    <input type="date" id="filter-date" class="border p-2 rounded w-full">
-                    <button onclick="fetchHistory()" class="bg-gray-800 text-white rounded px-4 py-2 hover:bg-black">Filtrar</button>
-                </div>
+            <div class="flex flex-col md:flex-row gap-2 mb-4">
+                <input type="text" id="filter-search" placeholder="Buscar..." class="border p-2 rounded w-full">
+                <button onclick="fetchHistory()" class="bg-gray-800 text-white px-4 py-2 rounded">Buscar</button>
             </div>
-
-            <div class="bg-white rounded-lg shadow overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
+            <div class="bg-white rounded shadow overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Culto</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ministro / Dirigente</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Público Total</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
+                            <th class="px-4 py-3">Data/Culto</th>
+                            <th class="px-4 py-3">Pessoas</th>
+                            <th class="px-4 py-3">Liderança</th>
                         </tr>
                     </thead>
-                    <tbody id="history-table-body" class="bg-white divide-y divide-gray-200">
+                    <tbody id="history-table-body">
                         </tbody>
                 </table>
-                <div id="no-results" class="hidden p-8 text-center text-gray-500">Nenhum culto encontrado.</div>
+                <p id="no-results" class="hidden p-4 text-center">Nenhum registro encontrado.</p>
             </div>
         </section>
 
     </main>
 
     <script>
-        // --- 1. CONFIGURAÇÃO SUPABASE ---
+        // CONFIGURAÇÃO SUPABASE
+        // IMPORTANTE: Não deve haver espaços dentro das aspas
         const SUPABASE_URL = 'https://qfuuykutvuleayldpncp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmdXV5a3V0dnVsZWF5bGRwbmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMTMzNTQsImV4cCI6MjA4Mjg4OTM1NH0.V5Fk4ijbaEvUdXtrQyvYoaH4S_WkZjWEsQrxkp3WAdk';
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Inicializa cliente
+        let supabase;
+        try {
+            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (err) {
+            showError("Erro fatal ao iniciar Supabase. Verifique console.");
+        }
 
-        // --- 2. VARIÁVEIS GLOBAIS ---
-        let chartInstanceType = null;
-        let chartInstanceDemo = null;
-        
-        // --- 3. INICIALIZAÇÃO ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const today = new Date();
-            document.getElementById('currentDate').innerText = today.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            
-            // Carregar Dashboard inicial
-            loadDashboard();
+        // --- SISTEMA DE INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await testConnection();
         });
 
-        // --- 4. NAVEGAÇÃO ---
-        function showPage(pageId) {
-            // Esconder todas as seções
-            document.getElementById('page-dashboard').classList.add('hidden');
-            document.getElementById('page-cadastro').classList.add('hidden');
-            document.getElementById('page-historico').classList.add('hidden');
+        async function testConnection() {
+            const loading = document.getElementById('loading');
+            const statusConn = document.getElementById('status-conn');
             
-            // Remover classe ativa dos botões
-            document.getElementById('nav-dashboard').className = "py-3 px-2 hover:text-red-700 transition text-gray-600";
-            document.getElementById('nav-cadastro').className = "py-3 px-2 hover:text-red-700 transition text-gray-600";
-            document.getElementById('nav-historico').className = "py-3 px-2 hover:text-red-700 transition text-gray-600";
+            try {
+                // Tenta buscar apenas 1 registro para testar a conexão
+                const { data, error } = await supabase.from('cultos').select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Sucesso
+                console.log("Conectado ao Supabase com sucesso!");
+                loading.style.display = 'none';
+                loadDashboard(); // Carrega os dados reais
 
-            // Mostrar seção selecionada
+            } catch (err) {
+                console.error("ERRO DE CONEXÃO:", err);
+                statusConn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro';
+                statusConn.className = "text-xs text-red-600 font-bold border border-red-200 bg-red-50 px-2 py-1 rounded hidden md:block";
+                
+                showError(`Não foi possível conectar: ${err.message || JSON.stringify(err)}. \n\nDICA: Verifique se você rodou o Script SQL de 'Policy' no Supabase.`);
+            }
+        }
+
+        function showError(msg) {
+            const loading = document.getElementById('loading');
+            document.getElementById('loading-text').style.display = 'none';
+            document.getElementById('error-message').innerText = msg;
+            document.getElementById('error-message').classList.remove('hidden');
+            document.getElementById('retry-btn').classList.remove('hidden');
+            // Garante que o loading fique visível com o erro
+            loading.style.display = 'flex';
+        }
+
+        // --- FUNÇÕES DE NAVEGAÇÃO ---
+        function showPage(pageId) {
+            ['dashboard', 'cadastro', 'historico'].forEach(p => {
+                document.getElementById(`page-${p}`).classList.add('hidden');
+                document.getElementById(`nav-${p}`).classList.remove('nav-active');
+                document.getElementById(`nav-${p}`).classList.add('text-gray-600');
+            });
+            
             document.getElementById(`page-${pageId}`).classList.remove('hidden');
-            document.getElementById(`nav-${pageId}`).className = "nav-active py-3 px-2 hover:text-red-700 transition";
+            document.getElementById(`nav-${pageId}`).classList.add('nav-active');
+            document.getElementById(`nav-${pageId}`).classList.remove('text-gray-600');
 
             if(pageId === 'dashboard') loadDashboard();
             if(pageId === 'historico') fetchHistory();
         }
 
-        // --- 5. LÓGICA DE CADASTRO ---
+        // --- DASHBOARD ---
+        let chartTypeInst = null;
+        let chartDemoInst = null;
+
+        async function loadDashboard() {
+            const { data: cultos, error } = await supabase.from('cultos').select('*').order('data_culto', { ascending: false }).limit(50);
+            if(error) return;
+
+            // KPIs
+            document.getElementById('kpi-total-cultos').innerText = cultos.length;
+            const totalPessoas = cultos.reduce((acc, c) => acc + (c.qtd_total || 0), 0);
+            document.getElementById('kpi-media-publico').innerText = cultos.length ? Math.round(totalPessoas / cultos.length) : 0;
+            
+            if(cultos.length > 0) {
+                document.getElementById('kpi-ultimo-tipo').innerText = cultos[0].tipo_culto;
+                const d = new Date(cultos[0].data_culto);
+                d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); // Ajuste fuso
+                document.getElementById('kpi-ultimo-data').innerText = d.toLocaleDateString('pt-BR');
+            }
+
+            // Gráficos
+            renderCharts(cultos);
+        }
+
+        function renderCharts(data) {
+            const typeCount = {};
+            let h=0, m=0, c=0;
+            data.forEach(item => {
+                typeCount[item.tipo_culto] = (typeCount[item.tipo_culto] || 0) + item.qtd_total;
+                h += item.qtd_homens; m += item.qtd_mulheres; c += item.qtd_criancas;
+            });
+
+            // Barras
+            if(chartTypeInst) chartTypeInst.destroy();
+            chartTypeInst = new Chart(document.getElementById('chartType'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(typeCount),
+                    datasets: [{ label: 'Pessoas', data: Object.values(typeCount), backgroundColor: '#C8102E' }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            // Pizza
+            if(chartDemoInst) chartDemoInst.destroy();
+            chartDemoInst = new Chart(document.getElementById('chartDemographics'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Homens', 'Mulheres', 'Crianças'],
+                    datasets: [{ data: [h, m, c], backgroundColor: ['#1E3A8A', '#DB2777', '#FBBF24'] }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+        }
+
+        // --- CADASTRO ---
         document.getElementById('formCulto').addEventListener('submit', async (e) => {
             e.preventDefault();
-            toggleLoading(true);
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = 'Salvando...'; btn.disabled = true;
 
-            const formData = {
+            const formObj = {
                 tipo_culto: document.getElementById('tipo_culto').value,
                 data_culto: document.getElementById('data_culto').value,
                 hora_inicio: document.getElementById('hora_inicio').value,
                 hora_termino: document.getElementById('hora_termino').value,
                 ministro: document.getElementById('ministro').value,
-                tempo_ministracao: parseInt(document.getElementById('tempo_ministracao').value) || 0,
+                tempo_ministracao: document.getElementById('tempo_ministracao').value || 0,
                 dirigente: document.getElementById('dirigente').value,
-                tempo_dirigente: parseInt(document.getElementById('tempo_dirigente').value) || 0,
+                tempo_dirigente: document.getElementById('tempo_dirigente').value || 0,
                 qtd_homens: parseInt(document.getElementById('qtd_homens').value) || 0,
                 qtd_mulheres: parseInt(document.getElementById('qtd_mulheres').value) || 0,
                 qtd_criancas: parseInt(document.getElementById('qtd_criancas').value) || 0
             };
 
-            const { data, error } = await supabase.from('cultos').insert([formData]);
+            const { error } = await supabase.from('cultos').insert([formObj]);
 
-            toggleLoading(false);
+            btn.innerText = originalText; btn.disabled = false;
 
-            if (error) {
+            if(error) {
                 alert('Erro ao salvar: ' + error.message);
-                console.error(error);
             } else {
-                alert('Culto registrado com sucesso!');
-                document.getElementById('formCulto').reset();
+                alert('Culto Salvo!');
+                e.target.reset();
                 showPage('dashboard');
             }
         });
 
-        // --- 6. LÓGICA DE DASHBOARD ---
-        async function loadDashboard() {
-            // Busca dados gerais (últimos 30 dias para performance, ou todos)
-            // Para simplicidade, vamos pegar os últimos 100 registros
-            const { data: cultos, error } = await supabase
-                .from('cultos')
-                .select('*')
-                .order('data_culto', { ascending: false })
-                .limit(100);
-
-            if (error) { console.error(error); return; }
-
-            // KPI: Total Cultos (simples contagem do array retornado)
-            document.getElementById('kpi-total-cultos').innerText = cultos.length;
-
-            // KPI: Média Público
-            const totalPessoas = cultos.reduce((acc, curr) => acc + (curr.qtd_total || 0), 0);
-            const media = cultos.length > 0 ? Math.round(totalPessoas / cultos.length) : 0;
-            document.getElementById('kpi-media-publico').innerText = media;
-
-            // KPI: Último Culto
-            if (cultos.length > 0) {
-                document.getElementById('kpi-ultimo-tipo').innerText = cultos[0].tipo_culto;
-                document.getElementById('kpi-ultimo-data').innerText = new Date(cultos[0].data_culto).toLocaleDateString('pt-BR');
-            }
-
-            // Preparar Gráficos
-            renderCharts(cultos);
-        }
-
-        function renderCharts(data) {
-            // Agrupar por Tipo
-            const tiposCount = {};
-            let totalH = 0, totalM = 0, totalC = 0;
-
-            data.forEach(c => {
-                tiposCount[c.tipo_culto] = (tiposCount[c.tipo_culto] || 0) + (c.qtd_total || 0);
-                totalH += c.qtd_homens;
-                totalM += c.qtd_mulheres;
-                totalC += c.qtd_criancas;
-            });
-
-            // Gráfico 1: Barras por Tipo
-            const ctxType = document.getElementById('chartType').getContext('2d');
-            if (chartInstanceType) chartInstanceType.destroy();
-            
-            chartInstanceType = new Chart(ctxType, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(tiposCount),
-                    datasets: [{
-                        label: 'Total de Pessoas',
-                        data: Object.values(tiposCount),
-                        backgroundColor: '#C8102E',
-                        borderRadius: 4
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
-
-            // Gráfico 2: Pizza Demográfica
-            const ctxDemo = document.getElementById('chartDemographics').getContext('2d');
-            if (chartInstanceDemo) chartInstanceDemo.destroy();
-
-            chartInstanceDemo = new Chart(ctxDemo, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Homens', 'Mulheres', 'Crianças'],
-                    datasets: [{
-                        data: [totalH, totalM, totalC],
-                        backgroundColor: ['#2563EB', '#DB2777', '#EAB308'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { responsive: true }
-            });
-        }
-
-        // --- 7. LÓGICA DE HISTÓRICO ---
+        // --- HISTÓRICO ---
         async function fetchHistory() {
-            toggleLoading(true);
-            const search = document.getElementById('filter-search').value.toLowerCase();
-            const type = document.getElementById('filter-type').value;
-            const date = document.getElementById('filter-date').value;
-
-            let query = supabase.from('cultos').select('*').order('data_culto', { ascending: false });
-
-            if (type !== 'all') query = query.eq('tipo_culto', type);
-            if (date) query = query.eq('data_culto', date);
-
-            const { data, error } = await query;
+            const term = document.getElementById('filter-search').value.toLowerCase();
+            const { data, error } = await supabase.from('cultos').select('*').order('data_culto', { ascending: false });
             
-            toggleLoading(false);
-
-            if (error) { console.error(error); return; }
+            if(error) { console.error(error); return; }
 
             const tbody = document.getElementById('history-table-body');
             tbody.innerHTML = '';
+            
+            const filtered = data.filter(i => 
+                !term || i.ministro.toLowerCase().includes(term) || i.tipo_culto.toLowerCase().includes(term)
+            );
 
-            // Filtro de Texto no Cliente (Supabase tem busca de texto, mas simples assim é mais rápido implementar aqui)
-            const filteredData = data.filter(item => {
-                return !search || 
-                       item.ministro.toLowerCase().includes(search) || 
-                       item.dirigente.toLowerCase().includes(search);
-            });
+            if(filtered.length === 0) document.getElementById('no-results').classList.remove('hidden');
+            else document.getElementById('no-results').classList.add('hidden');
 
-            if (filteredData.length === 0) {
-                document.getElementById('no-results').classList.remove('hidden');
-                return;
-            } else {
-                document.getElementById('no-results').classList.add('hidden');
-            }
-
-            filteredData.forEach(culto => {
-                const dateFmt = new Date(culto.data_culto).toLocaleDateString('pt-BR');
-                const row = `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${dateFmt}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                ${culto.tipo_culto}
-                            </span>
+            filtered.forEach(c => {
+                const date = new Date(c.data_culto).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <div class="font-bold text-gray-800">${date}</div>
+                            <div class="text-xs text-red-600 font-semibold">${c.tipo_culto}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-gray-700">M: ${culto.ministro}</span>
-                                <span class="text-xs">D: ${culto.dirigente}</span>
-                            </div>
+                        <td class="px-4 py-3">
+                            <div class="font-bold text-lg">${c.qtd_total}</div>
+                            <div class="text-xs text-gray-400">H:${c.qtd_homens} M:${c.qtd_mulheres} C:${c.qtd_criancas}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                            ${culto.qtd_total} <span class="text-xs text-gray-400 font-normal">(H:${culto.qtd_homens} M:${culto.qtd_mulheres} C:${culto.qtd_criancas})</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${culto.hora_inicio.slice(0,5)} - ${culto.hora_termino.slice(0,5)}
+                        <td class="px-4 py-3 text-xs">
+                            <div><strong>Min:</strong> ${c.ministro}</div>
+                            <div><strong>Dir:</strong> ${c.dirigente}</div>
                         </td>
                     </tr>
                 `;
-                tbody.innerHTML += row;
             });
         }
-
-        function toggleLoading(show) {
-            document.getElementById('loading').style.display = show ? 'flex' : 'none';
-        }
-
     </script>
 </body>
 </html>
