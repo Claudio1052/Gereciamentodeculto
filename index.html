@@ -953,7 +953,7 @@
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            // Configurar navegação
+            // Configurar navegação - FIXED
             setupNavigation();
             
             // Configurar botões
@@ -969,7 +969,7 @@
             loadAniversariantes(currentMonth, currentYear);
         });
         
-        // Configurar navegação entre páginas
+        // Configurar navegação entre páginas - FIXED VERSION
         function setupNavigation() {
             const tabBtns = document.querySelectorAll('.tab-btn');
             
@@ -988,18 +988,22 @@
                     
                     // Mostrar a página correspondente
                     const pageId = this.getAttribute('data-page');
-                    document.getElementById(pageId).classList.add('active');
-                    currentPage = pageId;
+                    const pageElement = document.getElementById(pageId);
                     
-                    // Carregar dados específicos da página
-                    if (pageId === 'dashboard') {
-                        loadDashboardData();
-                    } else if (pageId === 'cultos') {
-                        loadCultosData();
-                    } else if (pageId === 'membros') {
-                        loadMembrosData();
-                    } else if (pageId === 'aniversariantes') {
-                        loadAniversariantes(currentMonth, currentYear);
+                    if (pageElement) {
+                        pageElement.classList.add('active');
+                        currentPage = pageId;
+                        
+                        // Carregar dados específicos da página
+                        if (pageId === 'dashboard') {
+                            loadDashboardData();
+                        } else if (pageId === 'cultos') {
+                            loadCultosData();
+                        } else if (pageId === 'membros') {
+                            loadMembrosData();
+                        } else if (pageId === 'aniversariantes') {
+                            loadAniversariantes(currentMonth, currentYear);
+                        }
                     }
                 });
             });
@@ -1915,6 +1919,12 @@
                 notification.classList.remove('show');
             }, 3000);
         }
+        
+        // Exportar funções para uso global
+        window.editCulto = editCulto;
+        window.deleteCulto = deleteCulto;
+        window.editMembro = editMembro;
+        window.deleteMembro = deleteMembro;
     </script>
 </body>
 </html>
