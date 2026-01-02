@@ -1,257 +1,619 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IEVV Zona Leste - Gestão de Culto</title>
-    
+    <title>Sistema Igreja Verbo da Vida Zona Leste</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.40.0/dist/umd/supabase.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        :root { --verbo-blue: #002855; --verbo-red: #C8102E; --light: #f8f9fa; }
-        body { background: #eef2f7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        /* Layout */
-        .sidebar { width: 250px; height: 100vh; background: var(--verbo-blue); position: fixed; color: white; padding: 20px; transition: 0.3s; }
-        .main-content { margin-left: 250px; padding: 30px; transition: 0.3s; }
-        
-        /* Navigation */
-        .nav-link { color: #adb5bd; padding: 12px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; display: block; text-decoration: none; }
-        .nav-link:hover, .nav-link.active { background: var(--verbo-red); color: white; }
-        
-        /* Cards */
-        .card-stat { background: white; border-radius: 12px; padding: 20px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .card-stat h3 { font-size: 2rem; font-weight: bold; margin: 5px 0; color: var(--verbo-blue); }
-        
-        /* Botões */
-        .btn-verbo { background: var(--verbo-red); color: white; border-radius: 8px; padding: 10px 20px; border: none; font-weight: 600; }
-        .btn-verbo:hover { background: #a00d25; color: white; }
-
-        /* Status de Conexão */
-        #status-bar { position: fixed; bottom: 20px; right: 20px; padding: 8px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; z-index: 9999; }
-        .online { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .offline { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-        @media (max-width: 768px) {
-            .sidebar { width: 70px; padding: 10px; }
-            .sidebar span { display: none; }
-            .main-content { margin-left: 70px; }
+        :root {
+            --verbo-verde: #2a7221;
+            --verbe-verde-claro: #e8f5e9;
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            border-bottom: 3px solid var(--verbo-verde);
+            background-color: transparent;
+        }
+        .card-header {
+            background-color: var(--verbo-verde);
+            color: white;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: var(--verbo-verde);
+            border-color: var(--verbo-verde);
+        }
+        .btn-primary:hover {
+            background-color: #23631b;
+            border-color: #23631b;
+        }
+        .stats-card {
+            border-left: 4px solid var(--verbo-verde);
+            transition: transform 0.2s;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .badge-verbo {
+            background-color: var(--verbo-verde);
+        }
+        .tab-pane {
+            padding-top: 20px;
         }
     </style>
 </head>
 <body>
-
-    <div id="status-bar" class="offline">Conectando ao Supabase...</div>
-
-    <div class="sidebar">
-        <h5 class="text-center mb-4"><span>VERBO DA VIDA</span></h5>
-        <a class="nav-link active" onclick="showTab('dash')"><i class="fas fa-chart-line me-2"></i> <span>Dashboard</span></a>
-        <a class="nav-link" onclick="showTab('cultos')"><i class="fas fa-bible me-2"></i> <span>Cultos</span></a>
-        <a class="nav-link" onclick="showTab('membros')"><i class="fas fa-users me-2"></i> <span>Membros</span></a>
-    </div>
-
-    <div class="main-content">
-        
-        <div id="tab-dash" class="tab-content">
-            <h2 class="mb-4">Dashboard</h2>
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="card-stat text-center">
-                        <p class="text-muted mb-0">Total Membros</p>
-                        <h3 id="stat-membros">0</h3>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-stat text-center">
-                        <p class="text-muted mb-0">Aniversariantes</p>
-                        <h3 id="stat-niver">0</h3>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-stat text-center">
-                        <p class="text-muted mb-0">Média Público</p>
-                        <h3 id="stat-media">0</h3>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-stat text-center">
-                        <p class="text-muted mb-0">Graduados Rhema</p>
-                        <h3 id="stat-rhema">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-8"><div class="card-stat"><h5>Presença nos Cultos</h5><canvas id="chartLine"></canvas></div></div>
-                <div class="col-md-4"><div class="card-stat"><h5>Último Culto</h5><canvas id="chartPie"></canvas></div></div>
-            </div>
+    <!-- Barra de Navegação -->
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-house-door-fill me-2"></i>Igreja Verbo da Vida Zona Leste
+            </a>
+            <span class="navbar-text text-light">
+                Sistema de Gerenciamento
+            </span>
         </div>
+    </nav>
 
-        <div id="tab-cultos" class="tab-content" style="display:none">
-            <h2 class="mb-4">Registro de Culto</h2>
-            <div class="card-stat mb-4">
+    <div class="container-fluid">
+        <!-- Abas de Navegação -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                    <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cultos-tab" data-bs-toggle="tab" data-bs-target="#cultos" type="button" role="tab">
+                    <i class="bi bi-clock-history me-1"></i>Registrar Culto
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="membros-tab" data-bs-toggle="tab" data-bs-target="#membros" type="button" role="tab">
+                    <i class="bi bi-people-fill me-1"></i>Cadastrar Membro
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="lista-tab" data-bs-toggle="tab" data-bs-target="#lista" type="button" role="tab">
+                    <i class="bi bi-card-checklist me-1"></i>Lista & Filtros
+                </button>
+            </li>
+        </ul>
+
+        <!-- Conteúdo das Abas -->
+        <div class="tab-content p-3 border border-top-0 rounded-bottom shadow-sm bg-white" id="myTabContent">
+            <!-- Aba 1: Dashboard -->
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                <h4 class="mb-4"><i class="bi bi-graph-up text-success me-2"></i>Análises e Estatísticas</h4>
+                <div class="row mb-4" id="stats-container">
+                    <!-- Os cartões de estatística serão preenchidos por JavaScript -->
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Total de Membros</h5>
+                                <p class="card-text display-6" id="total-membros">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Cultos Registrados</h5>
+                                <p class="card-text display-6" id="total-cultos">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Aniversariantes do Mês</h5>
+                                <p class="card-text display-6" id="total-aniversariantes">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Média de Pessoas/Culto</h5>
+                                <p class="card-text display-6" id="media-pessoas">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">Últimos Cultos Registrados</div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="tabela-ultimos-cultos">
+                                        <thead>
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Ministro</th>
+                                                <th>Dirigente</th>
+                                                <th>Total Pessoas</th>
+                                                <th>Duração</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dados serão inseridos por JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba 2: Cadastro de Cultos -->
+            <div class="tab-pane fade" id="cultos" role="tabpanel">
+                <h4 class="mb-4"><i class="bi bi-plus-circle text-success me-2"></i>Registrar Novo Culto</h4>
                 <form id="form-culto">
-                    <div class="row g-3">
-                        <div class="col-md-3"><label>Data</label><input type="date" class="form-control" id="c-data" required></div>
-                        <div class="col-md-3"><label>Início</label><input type="time" class="form-control" id="c-inicio"></div>
-                        <div class="col-md-3"><label>Término</label><input type="time" class="form-control" id="c-termino"></div>
-                        <div class="col-md-3"><label>Ministro</label><input type="text" class="form-control" id="c-ministro" required></div>
-                        <div class="col-md-3"><label>Dirigente</label><input type="text" class="form-control" id="c-dirigente"></div>
-                        <div class="col-md-3"><label>Min. Palavra</label><input type="number" class="form-control" id="c-t-palavra"></div>
-                        <div class="col-md-2"><label>Homens</label><input type="number" class="form-control" id="c-h" value="0"></div>
-                        <div class="col-md-2"><label>Mulheres</label><input type="number" class="form-control" id="c-m" value="0"></div>
-                        <div class="col-md-2"><label>Crianças</label><input type="number" class="form-control" id="c-c" value="0"></div>
-                        <div class="col-12 text-end"><button type="submit" class="btn-verbo">Salvar Culto</button></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="data-culto" class="form-label">Data do Culto</label>
+                            <input type="date" class="form-control" id="data-culto" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="inicio-culto" class="form-label">Horário de Início</label>
+                            <input type="time" class="form-control" id="inicio-culto" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="termino-culto" class="form-label">Horário de Término</label>
+                            <input type="time" class="form-control" id="termino-culto" required>
+                        </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="ministro" class="form-label">Ministro da Noite</label>
+                            <input type="text" class="form-control" id="ministro" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="dirigente" class="form-label">Dirigente do Culto</label>
+                            <input type="text" class="form-control" id="dirigente" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="total-pessoas" class="form-label">Total de Pessoas</label>
+                            <input type="number" class="form-control" id="total-pessoas" min="0" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="total-homens" class="form-label">Homens</label>
+                            <input type="number" class="form-control" id="total-homens" min="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="total-mulheres" class="form-label">Mulheres</label>
+                            <input type="number" class="form-control" id="total-mulheres" min="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="total-criancas" class="form-label">Crianças</label>
+                            <input type="number" class="form-control" id="total-criancas" min="0">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="tempo-ministerio" class="form-label">Tempo de Ministração (minutos)</label>
+                            <input type="number" class="form-control" id="tempo-ministerio" min="0" placeholder="Ex: 45">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tempo-dirigente" class="form-label">Tempo do Dirigente (minutos)</label>
+                            <input type="number" class="form-control" id="tempo-dirigente" min="0" placeholder="Ex: 30">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacoes" class="form-label">Observações</label>
+                        <textarea class="form-control" id="observacoes" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-save me-2"></i>Salvar Registro do Culto
+                    </button>
+                    <div id="msg-culto" class="mt-3"></div>
                 </form>
             </div>
-            <div class="card-stat"><table class="table"><thead><tr><th>Data</th><th>Ministro</th><th>Total</th></tr></thead><tbody id="lista-cultos"></tbody></table></div>
-        </div>
 
-        <div id="tab-membros" class="tab-content" style="display:none">
-            <h2 class="mb-4">Cadastro de Membros</h2>
-            <div class="card-stat mb-4">
+            <!-- Aba 3: Cadastro de Membros -->
+            <div class="tab-pane fade" id="membros" role="tabpanel">
+                <h4 class="mb-4"><i class="bi bi-person-plus text-success me-2"></i>Cadastrar Novo Membro</h4>
                 <form id="form-membro">
-                    <div class="row g-3">
-                        <div class="col-md-6"><label>Nome</label><input type="text" class="form-control" id="m-nome" required></div>
-                        <div class="col-md-3"><label>Nascimento</label><input type="date" class="form-control" id="m-nasc"></div>
-                        <div class="col-md-3"><label>Telefone</label><input type="text" class="form-control" id="m-fone"></div>
-                        <div class="col-md-3"><label>CEP</label><input type="text" class="form-control" id="m-cep" onblur="buscarCEP(this.value)"></div>
-                        <div class="col-md-9"><label>Endereço</label><input type="text" class="form-control" id="m-end" readonly></div>
-                        <div class="col-md-4"><input type="checkbox" id="m-rhema"> <label>Graduado Rhema</label></div>
-                        <div class="col-12 text-end"><button type="submit" class="btn-verbo">Cadastrar Membro</button></div>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="nome-completo" class="form-label">Nome Completo *</label>
+                            <input type="text" class="form-control" id="nome-completo" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="data-nascimento" class="form-label">Data de Nascimento</label>
+                            <input type="date" class="form-control" id="data-nascimento">
+                        </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="telefone" class="form-label">Telefone</label>
+                            <input type="tel" class="form-control" id="telefone" placeholder="(11) 99999-9999">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="cep" class="form-label">CEP</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="cep" placeholder="00000-000">
+                                <button class="btn btn-outline-secondary" type="button" id="btn-buscar-cep">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="logradouro" class="form-label">Logradouro</label>
+                            <input type="text" class="form-control" id="logradouro">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="bairro" class="form-label">Bairro</label>
+                            <input type="text" class="form-control" id="bairro">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cidade" class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="cidade">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="uf" class="form-label">UF</label>
+                            <input type="text" class="form-control" id="uf">
+                        </div>
+                    </div>
+                    <fieldset class="row mb-4">
+                        <legend class="col-form-label col-sm-12 pt-0">Cursos Realizados:</legend>
+                        <div class="col-sm-12">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="fez-rhema" value="true">
+                                <label class="form-check-label" for="fez-rhema">Fez Rhema</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="fez-escola-ministros" value="true">
+                                <label class="form-check-label" for="fez-escola-ministros">Fez Escola de Ministros</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="fez-escola-missoes" value="true">
+                                <label class="form-check-label" for="fez-escola-missoes">Fez Escola de Missões</label>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-person-check me-2"></i>Cadastrar Membro
+                    </button>
+                    <div id="msg-membro" class="mt-3"></div>
                 </form>
             </div>
-            <div class="card-stat"><table class="table"><thead><tr><th>Nome</th><th>Status</th><th>Nascimento</th></tr></thead><tbody id="lista-membros"></tbody></table></div>
-        </div>
 
+            <!-- Aba 4: Lista e Filtros -->
+            <div class="tab-pane fade" id="lista" role="tabpanel">
+                <h4 class="mb-4"><i class="bi bi-funnel text-success me-2"></i>Lista de Membros com Filtros</h4>
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        <label for="filtro-nome" class="form-label">Buscar por Nome</label>
+                        <input type="text" class="form-control" id="filtro-nome" placeholder="Digite um nome...">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="filtro-curso" class="form-label">Filtrar por Curso</label>
+                        <select class="form-select" id="filtro-curso">
+                            <option value="">Todos os Cursos</option>
+                            <option value="rhema">Fez Rhema</option>
+                            <option value="ministros">Fez Escola de Ministros</option>
+                            <option value="missoes">Fez Escola de Missões</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3 d-flex align-items-end">
+                        <button class="btn btn-success w-100" id="btn-filtrar-aniversariantes">
+                            <i class="bi bi-gift me-2"></i>Ver Aniversariantes do Mês
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Nascimento</th>
+                                <th>Telefone</th>
+                                <th>Cidade</th>
+                                <th>Rhema</th>
+                                <th>Ministros</th>
+                                <th>Missões</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-membros">
+                            <!-- Os dados serão preenchidos por JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- ViaCEP -->
+    <script src="https://cdn.jsdelivr.net/npm/viacep-promise@latest/dist/viacep-promise.min.js"></script>
 
     <script>
-        // Configurações
-        const URL = 'https://nekbbkenxcukoortusge.supabase.co';
-        const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc';
-        
-        let client;
+        // ================= CONFIGURAÇÃO SUPABASE =================
+        // ATENÇÃO: SUBSTITUA ESTES VALORES PELOS DO SEU NOVO PROJETO SUPABASE!
+        const supabaseUrl = 'https://nekbbkenxcukoortusge.supabase.co'; // Substitua pela sua URL
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc'; // Substitua pela sua chave anon pública
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // =========================================================
 
-        // Inicializar Conexão
-        async function conectar() {
+        // Elementos do DOM
+        const formCulto = document.getElementById('form-culto');
+        const formMembro = document.getElementById('form-membro');
+        const btnBuscarCep = document.getElementById('btn-buscar-cep');
+        const cepInput = document.getElementById('cep');
+        const filtroNome = document.getElementById('filtro-nome');
+        const filtroCurso = document.getElementById('filtro-curso');
+        const btnAniversariantes = document.getElementById('btn-filtrar-aniversariantes');
+        const tabelaMembros = document.getElementById('tabela-membros');
+        const msgCulto = document.getElementById('msg-culto');
+        const msgMembro = document.getElementById('msg-membro');
+
+        // ================= FUNÇÕES PRINCIPAIS =================
+
+        // 1. Buscar CEP com ViaCEP
+        btnBuscarCep.addEventListener('click', async () => {
+            const cep = cepInput.value.replace(/\D/g, '');
+            if (cep.length !== 8) {
+                alert('CEP inválido. Digite 8 números.');
+                return;
+            }
             try {
-                // Forçar inicialização pelo UMD
-                client = window.supabase.createClient(URL, KEY);
-                
-                // Testar conexão buscando membros
-                const { data, error } = await client.from('membros').select('id').limit(1);
-                
-                if (error) throw error;
+                const endereco = await ViaCepPromises.buscarCep(cep);
+                if (endereco.erro) {
+                    alert('CEP não encontrado.');
+                    return;
+                }
+                document.getElementById('logradouro').value = endereco.logradouro || '';
+                document.getElementById('bairro').value = endereco.bairro || '';
+                document.getElementById('cidade').value = endereco.localidade || '';
+                document.getElementById('uf').value = endereco.uf || '';
+            } catch (error) {
+                console.error('Erro ao buscar CEP:', error);
+                alert('Serviço de CEP indisponível no momento.');
+            }
+        });
 
-                document.getElementById('status-bar').className = 'online';
-                document.getElementById('status-bar').innerText = 'Sistema Conectado';
+        // 2. Cadastrar um Novo Culto
+        formCulto.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msgCulto.innerHTML = '<div class="alert alert-info">Salvando...</div>';
+
+            // Calcular a duração total (opcional, para exibição)
+            const inicio = document.getElementById('inicio-culto').value;
+            const termino = document.getElementById('termino-culto').value;
+            const dataCulto = document.getElementById('data-culto').value;
+
+            // Preparar os dados para inserção
+            const cultoData = {
+                data_culto: dataCulto,
+                inicio: dataCulto + 'T' + inicio + ':00', // Combina data e hora
+                termino: dataCulto + 'T' + termino + ':00',
+                ministro: document.getElementById('ministro').value,
+                dirigente: document.getElementById('dirigente').value,
+                total_pessoas: parseInt(document.getElementById('total-pessoas').value),
+                total_homens: parseInt(document.getElementById('total-homens').value) || 0,
+                total_mulheres: parseInt(document.getElementById('total-mulheres').value) || 0,
+                total_criancas: parseInt(document.getElementById('total-criancas').value) || 0,
+                tempo_ministerio: 'PT' + (parseInt(document.getElementById('tempo-ministerio').value) || 0) + 'M',
+                tempo_dirigente: 'PT' + (parseInt(document.getElementById('tempo-dirigente').value) || 0) + 'M',
+                observacoes: document.getElementById('observacoes').value
+            };
+
+            // Inserir no Supabase
+            const { data, error } = await supabase
+                .from('cultos')
+                .insert([cultoData])
+                .select();
+
+            if (error) {
+                console.error('Erro ao salvar culto:', error);
+                msgCulto.innerHTML = `<div class="alert alert-danger">Erro: ${error.message}</div>`;
+            } else {
+                msgCulto.innerHTML = '<div class="alert alert-success">Culto registrado com sucesso!</div>';
+                formCulto.reset();
+                carregarDashboard(); // Atualiza as estatísticas
+            }
+            setTimeout(() => { msgCulto.innerHTML = ''; }, 5000);
+        });
+
+        // 3. Cadastrar um Novo Membro
+        formMembro.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msgMembro.innerHTML = '<div class="alert alert-info">Salvando...</div>';
+
+            const membroData = {
+                nome: document.getElementById('nome-completo').value,
+                data_nascimento: document.getElementById('data-nascimento').value || null,
+                telefone: document.getElementById('telefone').value,
+                endereco_cep: document.getElementById('cep').value,
+                endereco_logradouro: document.getElementById('logradouro').value,
+                endereco_bairro: document.getElementById('bairro').value,
+                endereco_cidade: document.getElementById('cidade').value,
+                endereco_uf: document.getElementById('uf').value,
+                fez_rhema: document.getElementById('fez-rhema').checked,
+                fez_escola_ministros: document.getElementById('fez-escola-ministros').checked,
+                fez_escola_missoes: document.getElementById('fez-escola-missoes').checked
+            };
+
+            const { data, error } = await supabase
+                .from('membros')
+                .insert([membroData])
+                .select();
+
+            if (error) {
+                console.error('Erro ao salvar membro:', error);
+                msgMembro.innerHTML = `<div class="alert alert-danger">Erro: ${error.message}</div>`;
+            } else {
+                msgMembro.innerHTML = '<div class="alert alert-success">Membro cadastrado com sucesso!</div>';
+                formMembro.reset();
                 carregarDashboard();
-                carregarMembros();
-                carregarCultos();
-            } catch (err) {
-                console.error(err);
-                document.getElementById('status-bar').className = 'offline';
-                document.getElementById('status-bar').innerText = 'Erro: Verifique o SQL no Supabase';
+                carregarMembros(); // Atualiza a lista na aba de filtros
             }
+            setTimeout(() => { msgMembro.innerHTML = ''; }, 5000);
+        });
+
+        // 4. Carregar e Filtrar Membros
+        async function carregarMembros(filtro = {}) {
+            let query = supabase.from('membros').select('*').order('nome');
+
+            // Aplicar filtros
+            if (filtro.nome) {
+                query = query.ilike('nome', `%${filtro.nome}%`);
+            }
+            if (filtro.curso === 'rhema') {
+                query = query.eq('fez_rhema', true);
+            } else if (filtro.curso === 'ministros') {
+                query = query.eq('fez_escola_ministros', true);
+            } else if (filtro.curso === 'missoes') {
+                query = query.eq('fez_escola_missoes', true);
+            }
+            // Filtro de aniversariantes
+            if (filtro.aniversariantes) {
+                const mesAtual = new Date().getMonth() + 1; // Janeiro = 1
+                query = query.filter('data_nascimento', 'not.is', null);
+                // Nota: Filtro por mês diretamente no Supabase requer uma função específica.
+                // Esta é uma implementação simplificada que filtra no lado do cliente após a busca.
+            }
+
+            const { data: membros, error } = await query;
+            if (error) {
+                console.error('Erro ao carregar membros:', error);
+                tabelaMembros.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Erro ao carregar dados.</td></tr>';
+                return;
+            }
+
+            // Aplicar filtro de aniversariantes no lado do cliente se necessário
+            let membrosFiltrados = membros;
+            if (filtro.aniversariantes) {
+                const mesAtual = new Date().getMonth() + 1;
+                membrosFiltrados = membros.filter(m => {
+                    if (!m.data_nascimento) return false;
+                    const nascimento = new Date(m.data_nascimento);
+                    return nascimento.getMonth() + 1 === mesAtual;
+                });
+            }
+
+            // Renderizar a tabela
+            if (membrosFiltrados.length === 0) {
+                tabelaMembros.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum membro encontrado.</td></tr>';
+                return;
+            }
+
+            tabelaMembros.innerHTML = membrosFiltrados.map(membro => `
+                <tr>
+                    <td><strong>${membro.nome}</strong></td>
+                    <td>${membro.data_nascimento ? new Date(membro.data_nascimento).toLocaleDateString('pt-BR') : '---'}</td>
+                    <td>${membro.telefone || '---'}</td>
+                    <td>${membro.endereco_cidade || '---'} / ${membro.endereco_uf || ''}</td>
+                    <td>${membro.fez_rhema ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>'}</td>
+                    <td>${membro.fez_escola_ministros ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>'}</td>
+                    <td>${membro.fez_escola_missoes ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>'}</td>
+                </tr>
+            `).join('');
         }
 
-        function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-            document.getElementById('tab-' + tab).style.display = 'block';
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-        }
-
-        // Membros
-        async function carregarMembros() {
-            const { data } = await client.from('membros').select('*').order('nome');
-            const lista = document.getElementById('lista-membros');
-            lista.innerHTML = '';
-            data.forEach(m => {
-                lista.innerHTML += `<tr><td>${m.nome}</td><td>${m.fez_rhema?'Rhema':''}</td><td>${m.data_nascimento || '-'}</td></tr>`;
-            });
-            document.getElementById('stat-membros').innerText = data.length;
-        }
-
-        document.getElementById('form-membro').onsubmit = async (e) => {
-            e.preventDefault();
-            const payload = {
-                nome: document.getElementById('m-nome').value,
-                data_nascimento: document.getElementById('m-nasc').value || null,
-                telefone: document.getElementById('m-fone').value,
-                cep: document.getElementById('m-cep').value,
-                endereco: document.getElementById('m-end').value,
-                fez_rhema: document.getElementById('m-rhema').checked
-            };
-            const { error } = await client.from('membros').insert([payload]);
-            if(!error) { alert('Membro Salvo!'); carregarMembros(); carregarDashboard(); }
-        };
-
-        // Cultos
-        async function carregarCultos() {
-            const { data } = await client.from('cultos').select('*').order('data_culto', {ascending: false});
-            const lista = document.getElementById('lista-cultos');
-            lista.innerHTML = '';
-            data.forEach(c => {
-                lista.innerHTML += `<tr><td>${c.data_culto}</td><td>${c.ministro}</td><td>${c.qtd_homens+c.qtd_mulheres+c.qtd_criancas}</td></tr>`;
-            });
-        }
-
-        document.getElementById('form-culto').onsubmit = async (e) => {
-            e.preventDefault();
-            const payload = {
-                data_culto: document.getElementById('c-data').value,
-                hora_inicio: document.getElementById('c-inicio').value,
-                hora_termino: document.getElementById('c-termino').value,
-                ministro: document.getElementById('c-ministro').value,
-                dirigente: document.getElementById('c-dirigente').value,
-                tempo_ministracao: document.getElementById('c-t-palavra').value || 0,
-                qtd_homens: parseInt(document.getElementById('c-h').value),
-                qtd_mulheres: parseInt(document.getElementById('c-m').value),
-                qtd_criancas: parseInt(document.getElementById('c-c').value)
-            };
-            const { error } = await client.from('cultos').insert([payload]);
-            if(!error) { alert('Culto Salvo!'); carregarCultos(); carregarDashboard(); }
-        };
-
-        async function buscarCEP(cep) {
-            const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-            const data = await res.json();
-            if(!data.erro) document.getElementById('m-end').value = `${data.logradouro}, ${data.bairro} - ${data.localidade}/${data.uf}`;
-        }
-
+        // 5. Carregar Dados do Dashboard
         async function carregarDashboard() {
-            const { data: cultos } = await client.from('cultos').select('*').order('data_culto', {ascending: true});
-            const { data: rhema } = await client.from('membros').select('id').eq('fez_rhema', true);
-            
-            document.getElementById('stat-rhema').innerText = rhema?.length || 0;
+            // Total de Membros
+            const { count: totalMembros } = await supabase
+                .from('membros')
+                .select('*', { count: 'exact', head: true });
+            document.getElementById('total-membros').textContent = totalMembros || 0;
 
+            // Total de Cultos
+            const { count: totalCultos } = await supabase
+                .from('cultos')
+                .select('*', { count: 'exact', head: true });
+            document.getElementById('total-cultos').textContent = totalCultos || 0;
+
+            // Aniversariantes do Mês
+            const mesAtual = new Date().getMonth() + 1;
+            const { data: membros } = await supabase
+                .from('membros')
+                .select('data_nascimento');
+            const aniversariantes = membros ? membros.filter(m => {
+                if (!m.data_nascimento) return false;
+                const nascimento = new Date(m.data_nascimento);
+                return nascimento.getMonth() + 1 === mesAtual;
+            }).length : 0;
+            document.getElementById('total-aniversariantes').textContent = aniversariantes;
+
+            // Média de Pessoas por Culto
+            const { data: cultos } = await supabase
+                .from('cultos')
+                .select('total_pessoas');
+            let media = 0;
             if (cultos && cultos.length > 0) {
-                const ultimos = cultos.slice(-5);
-                const totais = ultimos.map(c => c.qtd_homens + c.qtd_mulheres + c.qtd_criancas);
-                
-                // Gráfico Linha
-                new Chart(document.getElementById('chartLine'), {
-                    type: 'line',
-                    data: { labels: ultimos.map(c => c.data_culto), datasets: [{ label: 'Público', data: totais, borderColor: '#C8102E' }] }
-                });
+                const soma = cultos.reduce((acc, c) => acc + (c.total_pessoas || 0), 0);
+                media = Math.round(soma / cultos.length);
+            }
+            document.getElementById('media-pessoas').textContent = media;
 
-                // Gráfico Pizza (último)
-                const u = cultos[cultos.length-1];
-                new Chart(document.getElementById('chartPie'), {
-                    type: 'doughnut',
-                    data: { labels: ['H', 'M', 'C'], datasets: [{ data: [u.qtd_homens, u.qtd_mulheres, u.qtd_criancas], backgroundColor: ['#002855', '#C8102E', '#FFC107'] }] }
-                });
+            // Últimos 5 Cultos
+            const { data: ultimosCultos } = await supabase
+                .from('cultos')
+                .select('*')
+                .order('data_culto', { ascending: false })
+                .limit(5);
+            const tabela = document.querySelector('#tabela-ultimos-cultos tbody');
+            if (ultimosCultos && ultimosCultos.length > 0) {
+                tabela.innerHTML = ultimosCultos.map(culto => `
+                    <tr>
+                        <td>${new Date(culto.data_culto).toLocaleDateString('pt-BR')}</td>
+                        <td>${culto.ministro}</td>
+                        <td>${culto.dirigente}</td>
+                        <td><span class="badge bg-primary">${culto.total_pessoas}</span></td>
+                        <td>${culto.inicio ? new Date(culto.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''} - ${culto.termino ? new Date(culto.termino).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum culto registrado ainda.</td></tr>';
             }
         }
 
-        // Rodar ao iniciar
-        window.onload = conectar;
+        // 6. Event Listeners para Filtros
+        filtroNome.addEventListener('input', (e) => {
+            carregarMembros({ nome: e.target.value, curso: filtroCurso.value });
+        });
+        filtroCurso.addEventListener('change', (e) => {
+            carregarMembros({ nome: filtroNome.value, curso: e.target.value });
+        });
+        btnAniversariantes.addEventListener('click', () => {
+            carregarMembros({ aniversariantes: true });
+            // Opcional: limpar outros filtros
+            filtroNome.value = '';
+            filtroCurso.value = '';
+        });
+
+        // ================= INICIALIZAÇÃO =================
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarDashboard();
+            carregarMembros();
+            // Define a data atual como padrão no formulário de cultos
+            document.getElementById('data-culto').valueAsDate = new Date();
+        });
     </script>
 </body>
 </html>
